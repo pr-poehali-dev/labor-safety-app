@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
@@ -63,6 +64,49 @@ const Index = () => {
     { id: 'reports', name: 'Отчетность', icon: 'BarChart3', count: 28, color: 'text-indigo-600' },
     { id: 'documents', name: 'Документы', icon: 'FolderOpen', count: 234, color: 'text-teal-600' },
   ];
+
+  const incidentsTrendData = [
+    { month: 'Янв', incidents: 12, resolved: 10, critical: 2 },
+    { month: 'Фев', incidents: 8, resolved: 7, critical: 1 },
+    { month: 'Мар', incidents: 15, resolved: 12, critical: 3 },
+    { month: 'Апр', incidents: 6, resolved: 6, critical: 0 },
+    { month: 'Май', incidents: 10, resolved: 8, critical: 2 },
+    { month: 'Июн', incidents: 4, resolved: 4, critical: 0 },
+    { month: 'Июл', incidents: 7, resolved: 6, critical: 1 },
+    { month: 'Авг', incidents: 5, resolved: 5, critical: 0 },
+    { month: 'Сен', incidents: 9, resolved: 8, critical: 1 },
+    { month: 'Окт', incidents: 3, resolved: 2, critical: 1 },
+  ];
+
+  const safetyScoreData = [
+    { month: 'Янв', score: 78 },
+    { month: 'Фев', score: 82 },
+    { month: 'Мар', score: 80 },
+    { month: 'Апр', score: 86 },
+    { month: 'Май', score: 88 },
+    { month: 'Июн', score: 91 },
+    { month: 'Июл', score: 89 },
+    { month: 'Авг', score: 92 },
+    { month: 'Сен', score: 93 },
+    { month: 'Окт', score: 94 },
+  ];
+
+  const trainingCompletionData = [
+    { name: 'Пожарная безопасность', value: 87, color: '#EF4444' },
+    { name: 'Первая помощь', value: 92, color: '#10B981' },
+    { name: 'Работа на высоте', value: 65, color: '#F59E0B' },
+    { name: 'Электробезопасность', value: 78, color: '#3B82F6' },
+  ];
+
+  const departmentSafetyData = [
+    { department: 'Производство', incidents: 8, audits: 15, compliance: 92 },
+    { department: 'Склад', incidents: 5, audits: 12, compliance: 88 },
+    { department: 'Офис', incidents: 1, audits: 8, compliance: 98 },
+    { department: 'Логистика', incidents: 6, audits: 10, compliance: 85 },
+    { department: 'Лаборатория', incidents: 2, audits: 14, compliance: 95 },
+  ];
+
+  const COLORS = ['#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#8B5CF6'];
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,7 +233,35 @@ const Index = () => {
               ))}
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Динамика инцидентов</CardTitle>
+                  <CardDescription>Статистика по месяцам: всего, решено, критичные</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={incidentsTrendData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="month" stroke="#6B7280" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#6B7280" style={{ fontSize: '12px' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#FFFFFF', 
+                          border: '1px solid #E5E7EB', 
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }} 
+                      />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Bar dataKey="incidents" fill="#3B82F6" name="Всего инцидентов" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="resolved" fill="#10B981" name="Решено" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="critical" fill="#EF4444" name="Критичные" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Последние инциденты</CardTitle>
@@ -236,27 +308,132 @@ const Index = () => {
                 </CardContent>
               </Card>
 
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Прогресс обучения</CardTitle>
-                  <CardDescription>Активные программы обучения персонала</CardDescription>
+                  <CardTitle>Уровень безопасности</CardTitle>
+                  <CardDescription>Общий показатель безопасности труда за 10 месяцев</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  {trainings.map((training, index) => (
-                    <div key={index}>
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium text-sm">{training.name}</p>
-                        <span className="text-sm text-muted-foreground">{training.users} чел.</span>
-                      </div>
-                      <div className="space-y-1">
-                        <Progress value={training.progress} className="h-2" />
-                        <p className="text-xs text-muted-foreground text-right">{training.progress}% завершено</p>
-                      </div>
-                    </div>
-                  ))}
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={safetyScoreData}>
+                      <defs>
+                        <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="month" stroke="#6B7280" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#6B7280" style={{ fontSize: '12px' }} domain={[0, 100]} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#FFFFFF', 
+                          border: '1px solid #E5E7EB', 
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }} 
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="score" 
+                        stroke="#10B981" 
+                        strokeWidth={3}
+                        fillOpacity={1} 
+                        fill="url(#colorScore)" 
+                        name="Уровень безопасности"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Завершение обучения</CardTitle>
+                  <CardDescription>Процент прохождения по программам</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={trainingCompletionData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, value }) => `${name}: ${value}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {trainingCompletionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#FFFFFF', 
+                          border: '1px solid #E5E7EB', 
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }} 
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Показатели безопасности по отделам</CardTitle>
+                <CardDescription>Сравнение инцидентов, аудитов и уровня соответствия</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={departmentSafetyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="department" stroke="#6B7280" style={{ fontSize: '12px' }} />
+                    <YAxis stroke="#6B7280" style={{ fontSize: '12px' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#FFFFFF', 
+                        border: '1px solid #E5E7EB', 
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }} 
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="incidents" 
+                      stroke="#EF4444" 
+                      strokeWidth={2}
+                      name="Инциденты" 
+                      dot={{ fill: '#EF4444', r: 4 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="audits" 
+                      stroke="#3B82F6" 
+                      strokeWidth={2}
+                      name="Аудиты" 
+                      dot={{ fill: '#3B82F6', r: 4 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="compliance" 
+                      stroke="#10B981" 
+                      strokeWidth={2}
+                      name="Соответствие (%)" 
+                      dot={{ fill: '#10B981', r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
