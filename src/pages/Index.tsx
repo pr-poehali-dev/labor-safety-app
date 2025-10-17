@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +8,12 @@ import Icon from '@/components/ui/icon';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import * as XLSX from 'xlsx';
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
+  const [periodFilter, setPeriodFilter] = useState('all');
 
   const stats = [
     { title: 'Активных сотрудников', value: '1,247', change: '+12%', trend: 'up', icon: 'Users' },
@@ -65,7 +68,7 @@ const Index = () => {
     { id: 'documents', name: 'Документы', icon: 'FolderOpen', count: 234, color: 'text-teal-600' },
   ];
 
-  const incidentsTrendData = [
+  const allIncidentsTrendData = [
     { month: 'Янв', incidents: 12, resolved: 10, critical: 2 },
     { month: 'Фев', incidents: 8, resolved: 7, critical: 1 },
     { month: 'Мар', incidents: 15, resolved: 12, critical: 3 },
@@ -78,7 +81,7 @@ const Index = () => {
     { month: 'Окт', incidents: 3, resolved: 2, critical: 1 },
   ];
 
-  const safetyScoreData = [
+  const allSafetyScoreData = [
     { month: 'Янв', score: 78 },
     { month: 'Фев', score: 82 },
     { month: 'Мар', score: 80 },
@@ -90,6 +93,46 @@ const Index = () => {
     { month: 'Сен', score: 93 },
     { month: 'Окт', score: 94 },
   ];
+
+  const incidentsTrendData = useMemo(() => {
+    if (periodFilter === 'all') return allIncidentsTrendData;
+    if (periodFilter === 'quarter') return allIncidentsTrendData.slice(-3);
+    if (periodFilter === 'half') return allIncidentsTrendData.slice(-6);
+    return allIncidentsTrendData;
+  }, [periodFilter]);
+
+  const safetyScoreData = useMemo(() => {
+    if (periodFilter === 'all') return allSafetyScoreData;
+    if (periodFilter === 'quarter') return allSafetyScoreData.slice(-3);
+    if (periodFilter === 'half') return allSafetyScoreData.slice(-6);
+    return allSafetyScoreData;
+  }, [periodFilter]);
+
+  const exportToExcel = () => {
+    const wb = XLSX.utils.book_new();
+
+    const incidentsWS = XLSX.utils.json_to_sheet(incidentsTrendData);
+    XLSX.utils.book_append_sheet(wb, incidentsWS, 'Инциденты');
+
+    const safetyWS = XLSX.utils.json_to_sheet(safetyScoreData);
+    XLSX.utils.book_append_sheet(wb, safetyWS, 'Уровень безопасности');
+
+    const trainingWS = XLSX.utils.json_to_sheet(trainingCompletionData);
+    XLSX.utils.book_append_sheet(wb, trainingWS, 'Обучение');
+
+    const departmentWS = XLSX.utils.json_to_sheet(departmentSafetyData);
+    XLSX.utils.book_append_sheet(wb, departmentWS, 'Отделы');
+
+    const statsData = stats.map(s => ({
+      'Показатель': s.title,
+      'Значение': s.value,
+      'Изменение': s.change
+    }));
+    const statsWS = XLSX.utils.json_to_sheet(statsData);
+    XLSX.utils.book_append_sheet(wb, statsWS, 'Общая статистика');
+
+    XLSX.writeFile(wb, `АСУБТ_Отчет_${new Date().toLocaleDateString('ru-RU')}.xlsx`);
+  };
 
   const trainingCompletionData = [
     { name: 'Пожарная безопасность', value: 87, color: '#EF4444' },
@@ -201,10 +244,20 @@ const Index = () => {
                 <h2 className="text-3xl font-bold tracking-tight">Обзор системы</h2>
                 <p className="text-muted-foreground mt-1">Текущее состояние безопасности труда на предприятии</p>
               </div>
-              <div className="flex gap-3">
-                <Button variant="outline">
+              <div className="flex gap-3 items-center">
+                <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Выберите период" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все время (10 мес)</SelectItem>
+                    <SelectItem value="half">Полугодие (6 мес)</SelectItem>
+                    <SelectItem value="quarter">Квартал (3 мес)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" onClick={exportToExcel}>
                   <Icon name="Download" className="mr-2" size={16} />
-                  Экспорт
+                  Экспорт Excel
                 </Button>
                 <Button>
                   <Icon name="Plus" className="mr-2" size={16} />
