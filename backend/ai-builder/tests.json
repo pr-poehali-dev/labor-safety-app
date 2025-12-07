@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Get projects list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "projects": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create new project",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "prompt": "Создай лендинг для IT-компании"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "success": true,
+        "project": "object"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
