@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get modules list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "modules": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

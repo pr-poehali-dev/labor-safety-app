@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Save chat message",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "message_text": "Test message",
+        "sender": "user"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get chat history",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "messages": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

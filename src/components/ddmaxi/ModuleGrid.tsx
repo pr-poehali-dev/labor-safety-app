@@ -1,71 +1,51 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
-const modules = [
-  {
-    id: 1,
-    title: 'Кибербезопасность',
-    description: 'Мониторинг угроз и защита систем в реальном времени',
-    icon: 'Shield',
-    status: 'active',
-    tasks: 42,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10'
-  },
-  {
-    id: 2,
-    title: 'Медицинская диагностика',
-    description: 'Анализ медицинских данных и прогнозирование',
-    icon: 'HeartPulse',
-    status: 'active',
-    tasks: 28,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10'
-  },
-  {
-    id: 3,
-    title: 'Робототехника',
-    description: 'Управление роботизированными системами',
-    icon: 'Bot',
-    status: 'learning',
-    tasks: 15,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500/10'
-  },
-  {
-    id: 4,
-    title: 'Финансовая аналитика',
-    description: 'Прогнозирование рынков и автоматизация торговли',
-    icon: 'TrendingUp',
-    status: 'active',
-    tasks: 67,
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10'
-  },
-  {
-    id: 5,
-    title: 'Промышленное производство',
-    description: 'Оптимизация процессов и контроль качества',
-    icon: 'Factory',
-    status: 'active',
-    tasks: 51,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10'
-  },
-  {
-    id: 6,
-    title: 'Транспортная логистика',
-    description: 'Маршрутизация и управление автономным транспортом',
-    icon: 'Truck',
-    status: 'learning',
-    tasks: 33,
-    color: 'text-cyan-500',
-    bgColor: 'bg-cyan-500/10'
-  }
-];
+const colorMap: { [key: string]: { color: string; bgColor: string } } = {
+  'Кибербезопасность': { color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+  'Медицинская диагностика': { color: 'text-red-500', bgColor: 'bg-red-500/10' },
+  'Робототехника': { color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+  'Финансовая аналитика': { color: 'text-green-500', bgColor: 'bg-green-500/10' },
+  'Промышленное производство': { color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+  'Транспортная логистика': { color: 'text-cyan-500', bgColor: 'bg-cyan-500/10' }
+};
 
 const ModuleGrid = () => {
+  const [modules, setModules] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const response = await fetch('https://functions.poehali.dev/945fe55c-ad8b-42b6-9be6-085426bec028');
+        const data = await response.json();
+        
+        const enrichedModules = data.modules?.map((m: any) => ({
+          ...m,
+          color: colorMap[m.title]?.color || 'text-blue-500',
+          bgColor: colorMap[m.title]?.bgColor || 'bg-blue-500/10'
+        })) || [];
+        
+        setModules(enrichedModules);
+      } catch (error) {
+        console.error('Ошибка загрузки модулей:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchModules();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-slate-400">
+        <Icon name="Loader2" size={48} className="animate-spin" />
+      </div>
+    );
+  }
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
       {modules.map((module) => (

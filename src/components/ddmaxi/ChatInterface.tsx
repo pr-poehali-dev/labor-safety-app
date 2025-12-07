@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,15 +14,59 @@ interface Message {
 }
 
 const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: 'Добро пожаловать! Я DDMaxi SRS-II, ваш интеллектуальный помощник с возможностями самообучения. Чем могу помочь?',
-      sender: 'ai',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const response = await fetch('https://functions.poehali.dev/d155a8ad-63a7-4192-a022-7ccf0144402e');
+        const data = await response.json();
+        
+        if (data.messages && data.messages.length > 0) {
+          const loadedMessages = data.messages.map((m: any) => ({
+            id: m.id,
+            text: m.text,
+            sender: m.sender,
+            timestamp: new Date(m.timestamp)
+          }));
+          setMessages(loadedMessages);
+        } else {
+          setMessages([{
+            id: 1,
+            text: 'Добро пожаловать! Я DDMaxi SRS-II, ваш интеллектуальный помощник с возможностями самообучения. Чем могу помочь?',
+            sender: 'ai',
+            timestamp: new Date()
+          }]);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки истории:', error);
+        setMessages([{
+          id: 1,
+          text: 'Добро пожаловать! Я DDMaxi SRS-II, ваш интеллектуальный помощник с возможностями самообучения. Чем могу помочь?',
+          sender: 'ai',
+          timestamp: new Date()
+        }]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadHistory();
+  }, []);
+
+  const saveMessage = async (text: string, sender: 'user' | 'ai') => {
+    try {
+      await fetch('https://functions.poehali.dev/d155a8ad-63a7-4192-a022-7ccf0144402e', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_text: text, sender })
+      });
+    } catch (error) {
+      console.error('Ошибка сохранения сообщения:', error);
+    }
+  };
 
   const handleSend = () => {
     if (!inputValue.trim()) return;
@@ -35,16 +79,19 @@ const ChatInterface = () => {
     };
 
     setMessages([...messages, userMessage]);
+    saveMessage(inputValue, 'user');
     setInputValue('');
 
     setTimeout(() => {
+      const aiText = 'Анализирую ваш запрос с применением нейронных сетей и машинного обучения. Подготавливаю адаптивное решение...';
       const aiResponse: Message = {
         id: messages.length + 2,
-        text: 'Анализирую ваш запрос с применением нейронных сетей и машинного обучения. Подготавливаю адаптивное решение...',
+        text: aiText,
         sender: 'ai',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiResponse]);
+      saveMessage(aiText, 'ai');
     }, 1000);
   };
 
@@ -58,6 +105,11 @@ const ChatInterface = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <ScrollArea className="h-[500px] pr-4">
+          {loading ? (
+            <div className="h-full flex items-center justify-center text-slate-400">
+              <Icon name="Loader2" size={32} className="animate-spin" />
+            </div>
+          ) : (
           <div className="space-y-4">
             {messages.map((message) => (
               <div
@@ -88,6 +140,7 @@ const ChatInterface = () => {
               </div>
             ))}
           </div>
+          )}
         </ScrollArea>
 
         <div className="flex gap-2">

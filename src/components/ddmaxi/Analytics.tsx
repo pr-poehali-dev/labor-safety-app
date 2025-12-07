@@ -1,26 +1,54 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
-
-const performanceData = [
-  { time: '00:00', accuracy: 85, speed: 78, efficiency: 82 },
-  { time: '04:00', accuracy: 87, speed: 81, efficiency: 85 },
-  { time: '08:00', accuracy: 89, speed: 85, efficiency: 88 },
-  { time: '12:00', accuracy: 91, speed: 88, efficiency: 90 },
-  { time: '16:00', accuracy: 93, speed: 90, efficiency: 92 },
-  { time: '20:00', accuracy: 94, speed: 92, efficiency: 94 }
-];
-
-const moduleActivityData = [
-  { module: 'Кибербезопасность', tasks: 42, completed: 38, learning: 4 },
-  { module: 'Медицина', tasks: 28, completed: 25, learning: 3 },
-  { module: 'Робототехника', tasks: 15, completed: 10, learning: 5 },
-  { module: 'Финансы', tasks: 67, completed: 63, learning: 4 },
-  { module: 'Производство', tasks: 51, completed: 47, learning: 4 },
-  { module: 'Транспорт', tasks: 33, completed: 28, learning: 5 }
-];
+import * as XLSX from 'xlsx';
 
 const Analytics = () => {
+  const [performanceData, setPerformanceData] = useState<any[]>([]);
+  const [moduleActivityData, setModuleActivityData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const perfResponse = await fetch('https://functions.poehali.dev/0f2393e5-eaaa-43a8-b070-df9a75a4f4da');
+        const perfData = await perfResponse.json();
+        setPerformanceData(perfData.data || []);
+
+        const modulesResponse = await fetch('https://functions.poehali.dev/945fe55c-ad8b-42b6-9be6-085426bec028');
+        const modulesData = await modulesResponse.json();
+        
+        const activityData = modulesData.modules?.map((m: any) => ({
+          module: m.title,
+          tasks: m.tasks,
+          completed: Math.floor(m.tasks * 0.85),
+          learning: Math.floor(m.tasks * 0.15)
+        })) || [];
+        
+        setModuleActivityData(activityData);
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  const exportToExcel = () => {
+    const wb = XLSX.utils.book_new();
+    
+    const perfWS = XLSX.utils.json_to_sheet(performanceData);
+    XLSX.utils.book_append_sheet(wb, perfWS, 'Производительность');
+    
+    const moduleWS = XLSX.utils.json_to_sheet(moduleActivityData);
+    XLSX.utils.book_append_sheet(wb, moduleWS, 'Модули');
+    
+    XLSX.writeFile(wb, `DDMaxi_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
   return (
     <div className="grid gap-6">
       <div className="grid md:grid-cols-4 gap-4">
@@ -79,12 +107,29 @@ const Analytics = () => {
 
       <Card className="bg-slate-900/50 border-blue-500/20 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">Производительность системы</CardTitle>
-          <CardDescription className="text-slate-400">
-            Динамика ключевых показателей за 24 часа
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white">Производительность системы</CardTitle>
+              <CardDescription className="text-slate-400">
+                Динамика ключевых показателей за 24 часа
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={exportToExcel} 
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Icon name="Download" size={18} className="mr-2" />
+              Экспорт в Excel
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
+          {loading ? (
+            <div className="h-[300px] flex items-center justify-center text-slate-400">
+              <Icon name="Loader2" size={32} className="animate-spin" />
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={performanceData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -104,6 +149,7 @@ const Analytics = () => {
               <Line type="monotone" dataKey="efficiency" stroke="#8b5cf6" strokeWidth={2} name="Эффективность" />
             </LineChart>
           </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -115,6 +161,11 @@ const Analytics = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {loading ? (
+            <div className="h-[300px] flex items-center justify-center text-slate-400">
+              <Icon name="Loader2" size={32} className="animate-spin" />
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={moduleActivityData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -133,6 +184,7 @@ const Analytics = () => {
               <Bar dataKey="learning" fill="#f59e0b" name="В обучении" />
             </BarChart>
           </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
     </div>
