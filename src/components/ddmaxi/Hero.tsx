@@ -1,8 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const navigate = useNavigate();
+  
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="grid md:grid-cols-3 gap-6 mb-8">
