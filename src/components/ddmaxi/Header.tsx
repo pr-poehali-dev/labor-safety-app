@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const Header = () => {
+  const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -39,7 +41,15 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 text-sm text-slate-300">
+          <Button
+            onClick={() => navigate('/ai-builder')}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold hidden md:flex"
+          >
+            <Icon name="Sparkles" size={18} className="mr-2" />
+            AI Builder
+          </Button>
+
+          <div className="hidden lg:flex items-center gap-2 text-sm text-slate-300">
             <Icon name="Activity" size={16} className="text-green-400" />
             <span>Система обучается</span>
           </div>

@@ -58,10 +58,21 @@ const Hero = () => {
           <h2 className="text-4xl font-bold text-white mb-4">
             DDMaxi SRS-II
           </h2>
-          <p className="text-xl text-slate-300 mb-6">
+          <p className="text-xl text-slate-300 mb-8">
             Система адаптивного искусственного интеллекта с возможностями машинного обучения, 
             нейронных сетей и автономного принятия решений
           </p>
+          
+          <Button
+            size="lg"
+            onClick={() => navigate('/ai-builder')}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-8 py-6 text-lg mb-8 shadow-lg shadow-purple-500/30"
+          >
+            <Icon name="Sparkles" size={24} className="mr-3" />
+            Создать приложение с AI
+            <Icon name="ArrowRight" size={24} className="ml-3" />
+          </Button>
+
           <div className="flex flex-wrap justify-center gap-3">
             <div className="bg-slate-800/50 px-4 py-2 rounded-lg border border-blue-500/20">
               <Icon name="Cpu" size={16} className="inline mr-2 text-blue-400" />
