@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Get all events",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "events": "array",
+        "unread_count": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get unread events only",
+      "method": "GET",
+      "path": "/?unread_only=true",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "events": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

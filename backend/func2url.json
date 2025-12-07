@@ -1,4 +1,6 @@
 {
+  "get-events": "https://functions.poehali.dev/6928ca29-a01b-4def-aea5-df496828665e",
+  "get-training-data": "https://functions.poehali.dev/ce831a15-f504-4aa2-a13e-2d76d6c7e18b",
   "get-performance": "https://functions.poehali.dev/0f2393e5-eaaa-43a8-b070-df9a75a4f4da",
   "get-modules": "https://functions.poehali.dev/945fe55c-ad8b-42b6-9be6-085426bec028",
   "save-chat": "https://functions.poehali.dev/d155a8ad-63a7-4192-a022-7ccf0144402e"

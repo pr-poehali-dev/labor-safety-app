@@ -1,8 +1,27 @@
+import { useEffect, useState } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const Header = () => {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('https://functions.poehali.dev/6928ca29-a01b-4def-aea5-df496828665e?unread_only=true');
+        const data = await response.json();
+        setUnreadCount(data.unread_count || 0);
+      } catch (error) {
+        console.error('Ошибка загрузки уведомлений:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <header className="border-b border-blue-500/20 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -25,8 +44,13 @@ const Header = () => {
             <span>Система обучается</span>
           </div>
           
-          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white">
+          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white relative">
             <Icon name="Bell" size={20} />
+            {unreadCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
+                {unreadCount}
+              </Badge>
+            )}
           </Button>
           
           <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white">
