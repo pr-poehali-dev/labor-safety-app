@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Create new project version",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "project_id": "proj_test123",
+        "description": "Добавлена форма регистрации",
+        "changes": {
+          "added": ["RegisterForm.tsx"],
+          "modified": ["App.tsx"]
+        },
+        "code_snapshot": {
+          "files": ["App.tsx", "RegisterForm.tsx"]
+        }
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "version_id": "string",
+        "version_number": "number",
+        "created_at": "string",
+        "message": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get project versions",
+      "method": "GET",
+      "path": "/?project_id=proj_test123",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "versions": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

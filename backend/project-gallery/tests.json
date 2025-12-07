@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Get all gallery projects",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "projects": "array",
+        "total": "number",
+        "categories": "object"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get featured projects only",
+      "method": "GET",
+      "path": "/?featured=true",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "projects": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get projects by category",
+      "method": "GET",
+      "path": "/?category=landing",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "projects": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import Analytics from '@/components/ddmaxi/Analytics';
 import Settings from '@/components/ddmaxi/Settings';
 import RealtimeMonitoring from '@/components/ddmaxi/RealtimeMonitoring';
 import NotificationsPanel from '@/components/ddmaxi/NotificationsPanel';
+import ProjectGallery from '@/components/ddmaxi/ProjectGallery';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -21,10 +22,11 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-slate-900/50 border border-blue-500/20">
+          <TabsList className="grid w-full grid-cols-7 bg-slate-900/50 border border-blue-500/20">
             <TabsTrigger value="dashboard">Панель управления</TabsTrigger>
             <TabsTrigger value="monitoring">Обучение сетей</TabsTrigger>
             <TabsTrigger value="notifications">Уведомления</TabsTrigger>
+            <TabsTrigger value="gallery">Галерея</TabsTrigger>
             <TabsTrigger value="assistant">Помощник</TabsTrigger>
             <TabsTrigger value="analytics">Аналитика</TabsTrigger>
             <TabsTrigger value="settings">Настройки</TabsTrigger>
@@ -40,6 +42,10 @@ const Index = () => {
 
           <TabsContent value="notifications" className="mt-6">
             <NotificationsPanel />
+          </TabsContent>
+
+          <TabsContent value="gallery" className="mt-6">
+            <ProjectGallery />
           </TabsContent>
 
           <TabsContent value="assistant" className="mt-6">

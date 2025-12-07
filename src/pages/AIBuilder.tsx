@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { useNavigate } from 'react-router-dom';
+import ProjectGallery from '@/components/ddmaxi/ProjectGallery';
 
 interface Message {
   id: number;
@@ -28,6 +29,16 @@ interface Project {
   progress: number;
   url?: string;
   created_at: Date;
+}
+
+interface ProjectVersion {
+  version_id: string;
+  version_number: number;
+  description: string;
+  changes: any;
+  code_snapshot: any;
+  created_at: string;
+  created_by: string;
 }
 
 const AIBuilder = () => {
@@ -65,6 +76,8 @@ const AIBuilder = () => {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildProgress, setBuildProgress] = useState(0);
+  const [projectVersions, setProjectVersions] = useState<ProjectVersion[]>([]);
+  const [activeTab, setActiveTab] = useState('chat');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,6 +85,66 @@ const AIBuilder = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (currentProject) {
+      fetchVersions(currentProject.id);
+    }
+  }, [currentProject]);
+
+  const fetchVersions = async (projectId: string) => {
+    try {
+      const response = await fetch(`https://functions.poehali.dev/6b6e15ca-26e8-45cd-b607-4cfab8c38738?project_id=${projectId}`);
+      const data = await response.json();
+      setProjectVersions(data.versions || []);
+    } catch (error) {
+      console.error('Ошибка загрузки версий:', error);
+    }
+  };
+
+  const createVersion = async (projectId: string, description: string) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/6b6e15ca-26e8-45cd-b607-4cfab8c38738', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: projectId,
+          description,
+          changes: { modified: ['App.tsx'] },
+          code_snapshot: { timestamp: new Date().toISOString() }
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        fetchVersions(projectId);
+        return data;
+      }
+    } catch (error) {
+      console.error('Ошибка создания версии:', error);
+    }
+  };
+
+  const restoreVersion = async (versionId: string) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/6b6e15ca-26e8-45cd-b607-4cfab8c38738', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version_id: versionId })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const aiMessage: Message = {
+          id: messages.length + 1,
+          text: `✅ Проект восстановлен до версии ${data.version_number}\n\n${data.description}`,
+          sender: 'ai',
+          timestamp: new Date()
+        };
+        setMessages([...messages, aiMessage]);
+      }
+    } catch (error) {
+      console.error('Ошибка отката версии:', error);
+    }
+  };
 
   const quickTemplates = [
     { icon: 'Globe', label: 'Лендинг для бизнеса', prompt: 'Создай современный лендинг для IT-компании с анимациями' },
@@ -124,6 +197,9 @@ const AIBuilder = () => {
       };
 
       setCurrentProject(newProject);
+      
+      // Создаем первую версию проекта
+      createVersion(projectId, 'Начальная версия проекта');
 
       const aiResponse: Message = {
         id: messages.length + 2,
@@ -186,18 +262,37 @@ ${newProject.url}
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card className="bg-slate-900/50 border-purple-500/20 backdrop-blur-sm h-[calc(100vh-200px)] flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Icon name="MessageSquare" size={24} className="text-purple-400" />
-                  Диалог с AI-разработчиком
-                </CardTitle>
-                <CardDescription className="text-slate-400">
-                  Опишите свою идею, и я создам для вас приложение
-                </CardDescription>
-              </CardHeader>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="bg-slate-900/50 border border-purple-500/20 mb-6">
+            <TabsTrigger value="chat">
+              <Icon name="MessageSquare" size={16} className="mr-2" />
+              Диалог с AI
+            </TabsTrigger>
+            <TabsTrigger value="gallery">
+              <Icon name="Library" size={16} className="mr-2" />
+              Галерея примеров
+            </TabsTrigger>
+            {currentProject && (
+              <TabsTrigger value="versions">
+                <Icon name="GitBranch" size={16} className="mr-2" />
+                Версии ({projectVersions.length})
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="chat">
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card className="bg-slate-900/50 border-purple-500/20 backdrop-blur-sm h-[calc(100vh-200px)] flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <Icon name="MessageSquare" size={24} className="text-purple-400" />
+                      Диалог с AI-разработчиком
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      Опишите свою идею, и я создам для вас приложение
+                    </CardDescription>
+                  </CardHeader>
               <CardContent className="flex-1 flex flex-col">
                 <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
                   <div className="space-y-4">
@@ -428,6 +523,98 @@ ${newProject.url}
             </Card>
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="gallery">
+        <ProjectGallery />
+      </TabsContent>
+
+      {currentProject && (
+        <TabsContent value="versions">
+          <Card className="bg-slate-900/50 border-purple-500/20 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Icon name="GitBranch" size={24} className="text-blue-400" />
+                История версий проекта
+              </CardTitle>
+              <CardDescription className="text-slate-400">
+                {currentProject.name} • {projectVersions.length} версий
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {projectVersions.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <Icon name="GitBranch" size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>История версий пуста. Версии создаются автоматически при изменениях.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {projectVersions.map((version, index) => (
+                    <Card
+                      key={version.version_id}
+                      className="bg-slate-800/50 border-blue-500/20 hover:border-blue-500/40 transition-all"
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Badge className={
+                                index === 0
+                                  ? 'bg-green-500/20 text-green-300 border-green-500/30'
+                                  : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                              }>
+                                {index === 0 && <Icon name="CheckCircle2" size={12} className="mr-1" />}
+                                v{version.version_number}
+                              </Badge>
+                              <span className="text-xs text-slate-500">{version.created_at}</span>
+                              <span className="text-xs text-slate-500">• {version.created_by}</span>
+                            </div>
+                            <h3 className="text-white font-medium mb-2">{version.description}</h3>
+                            {version.changes && (
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                {version.changes.added && version.changes.added.length > 0 && (
+                                  <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
+                                    <Icon name="Plus" size={10} className="mr-1" />
+                                    Добавлено: {version.changes.added.length}
+                                  </Badge>
+                                )}
+                                {version.changes.modified && version.changes.modified.length > 0 && (
+                                  <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30">
+                                    <Icon name="Edit" size={10} className="mr-1" />
+                                    Изменено: {version.changes.modified.length}
+                                  </Badge>
+                                )}
+                                {version.changes.deleted && version.changes.deleted.length > 0 && (
+                                  <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/30">
+                                    <Icon name="Trash2" size={10} className="mr-1" />
+                                    Удалено: {version.changes.deleted.length}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {index !== 0 && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => restoreVersion(version.version_id)}
+                              className="bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white"
+                            >
+                              <Icon name="RotateCcw" size={14} className="mr-1" />
+                              Откатить
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      )}
+    </Tabs>
       </div>
     </div>
   );
