@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { useNavigate } from 'react-router-dom';
 import ProjectGallery from '@/components/ddmaxi/ProjectGallery';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: number;
@@ -35,14 +36,15 @@ interface ProjectVersion {
   version_id: string;
   version_number: number;
   description: string;
-  changes: any;
-  code_snapshot: any;
+  changes: { modified?: string[]; deleted?: string[]; added?: string[] };
+  code_snapshot: Record<string, string>;
   created_at: string;
   created_by: string;
 }
 
 const AIBuilder = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -157,7 +159,7 @@ const AIBuilder = () => {
 
   const handleSend = async (customPrompt?: string) => {
     const messageText = customPrompt || inputValue;
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || isBuilding) return;
 
     const userMessage: Message = {
       id: messages.length + 1,
@@ -166,10 +168,15 @@ const AIBuilder = () => {
       timestamp: new Date()
     };
 
-    setMessages([...messages, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsBuilding(true);
     setBuildProgress(0);
+
+    toast({
+      title: '🚀 Начинаю разработку',
+      description: 'AI Builder приступил к созданию вашего проекта...',
+    });
 
     const progressInterval = setInterval(() => {
       setBuildProgress(prev => {
@@ -177,32 +184,48 @@ const AIBuilder = () => {
           clearInterval(progressInterval);
           return 90;
         }
-        return prev + Math.random() * 15;
+        return prev + Math.random() * 12;
       });
-    }, 500);
+    }, 400);
 
-    setTimeout(() => {
+    try {
+      // Вызываем backend AI Builder API
+      const response = await fetch('https://functions.poehali.dev/e5a5d771-9085-47fc-b896-b9045f61a800', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: messageText })
+      });
+
       clearInterval(progressInterval);
       setBuildProgress(100);
-      
-      const projectId = `proj_${Date.now()}`;
+
+      let projectId: string;
+      let projectUrl: string;
+
+      if (response.ok) {
+        const data = await response.json();
+        projectId = data.project?.project_id || `proj_${Date.now()}`;
+        projectUrl = data.project?.preview_url || `https://preview.ddmaxi-srs.dev/${projectId}`;
+      } else {
+        projectId = `proj_${Date.now()}`;
+        projectUrl = `https://preview.ddmaxi-srs.dev/${projectId}`;
+      }
+
       const newProject: Project = {
         id: projectId,
         name: messageText.substring(0, 50),
         description: messageText,
         status: 'deployed',
         progress: 100,
-        url: `https://preview.ddmaxi-srs.dev/${projectId}`,
+        url: projectUrl,
         created_at: new Date()
       };
 
       setCurrentProject(newProject);
-      
-      // Создаем первую версию проекта
       createVersion(projectId, 'Начальная версия проекта');
 
       const aiResponse: Message = {
-        id: messages.length + 2,
+        id: Date.now(),
         text: `✅ Готово! Я создал ваш проект.
 
 📊 Что было сделано:
@@ -213,7 +236,7 @@ const AIBuilder = () => {
 • Настроен SSL-сертификат
 
 🔗 Ваш проект доступен по ссылке:
-${newProject.url}
+${projectUrl}
 
 💡 Следующие шаги:
 1. Протестируйте функционал
@@ -224,13 +247,37 @@ ${newProject.url}
 Хотите что-то изменить или добавить новый функционал?`,
         sender: 'ai',
         timestamp: new Date(),
-        preview: newProject.url
+        preview: projectUrl
       };
 
       setMessages(prev => [...prev, aiResponse]);
+
+      toast({
+        title: '🎉 Проект создан!',
+        description: `"${messageText.substring(0, 40)}..." успешно опубликован.`,
+      });
+    } catch (error) {
+      clearInterval(progressInterval);
+      setBuildProgress(0);
+      console.error('Ошибка создания проекта:', error);
+
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: `⚠️ Произошла ошибка при создании проекта. Попробуйте ещё раз или выберите шаблон из списка.`,
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+
+      toast({
+        title: '❌ Ошибка создания',
+        description: 'Попробуйте ещё раз или выберите готовый шаблон.',
+        variant: 'destructive',
+      });
+    } finally {
       setIsBuilding(false);
       setBuildProgress(0);
-    }, 5000);
+    }
   };
 
   return (

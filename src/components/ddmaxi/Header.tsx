@@ -4,7 +4,11 @@ import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const Header = () => {
+interface HeaderProps {
+  onNavigate?: (tab: string) => void;
+}
+
+const Header = ({ onNavigate }: HeaderProps) => {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -27,7 +31,10 @@ const Header = () => {
   return (
     <header className="border-b border-blue-500/20 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => onNavigate?.('dashboard')}
+        >
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
             <Icon name="Brain" size={24} className="text-white" />
           </div>
@@ -54,7 +61,13 @@ const Header = () => {
             <span>Система обучается</span>
           </div>
           
-          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-slate-300 hover:text-white relative"
+            onClick={() => onNavigate?.('notifications')}
+            title="Уведомления"
+          >
             <Icon name="Bell" size={20} />
             {unreadCount > 0 && (
               <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
@@ -63,7 +76,13 @@ const Header = () => {
             )}
           </Button>
           
-          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-slate-300 hover:text-white"
+            onClick={() => onNavigate?.('settings')}
+            title="Настройки"
+          >
             <Icon name="Settings" size={20} />
           </Button>
         </div>
